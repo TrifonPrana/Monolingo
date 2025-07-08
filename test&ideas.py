@@ -67,6 +67,9 @@ def handle_learn(message):
     global score
     score = 0
 
+    global words_to_rep
+    words_to_rep = {}
+
     bot.send_message(message.chat.id,"Хорошо,сейчас начнется урок!")
 
     ask_translation(message.chat.id,user_words,words_number)
@@ -84,6 +87,8 @@ def ask_translation(chat_id,user_words,words_left,):
         bot.send_message(chat_id,f'Напиши перевод слова "{word}".')
 
         bot.register_next_step_handler_by_chat_id(chat_id,check_translation,translation,words_left) 
+    elif len(words_to_rep) > 0:
+        word = random.choice(words_to_rep)
     else: 
         bot.send_message(chat_id,f"Урок окончен!Вы набрали {score}/{words_number*10} баллов!")
         
@@ -98,6 +103,7 @@ def check_translation(message,correct_translation,words_left):
     else:
         bot.send_message(message.chat.id,f'Неправильно!Правильный перевод "{correct_translation}".')
         score -= 5
+        words_to_rep[word] = correct_translation
 
     ask_translation(message.chat.id,user_data[str(message.chat.id)],words_left-1)
 
@@ -132,7 +138,6 @@ def handle_delword(message):
 @bot.message_handler(commands=["mywords"])
 def handle_mywords(message):    
     chat_id = str(message.chat.id)
-
 
     if len(user_data[chat_id]) <= 0:
         bot.send_message(chat_id, "Ваш словарь пуст. Добавьте слова с помощью команды /addword.")
