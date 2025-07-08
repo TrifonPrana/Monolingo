@@ -26,6 +26,22 @@ except FileNotFoundError:
 def handle_start(message):
     bot.send_message(message.chat.id,"Привет!Я твой бот помощник.Я могу помочь тебе учить языки!")
 
+#Обработчик команды /help
+@bot.message_handler(commands=["help"])
+def handle_help(message):
+    help_text = (
+        "Я могу помочь тебе учить языки! Вот список команд:\n"
+        "/start - Привет!\n"
+        "/help - Показать это сообщение\n"
+        "/addword <слово> <перевод> - Добавить слово и его перевод в словарь\n"
+        "/delword <слово> - Удалить слово и его перевод из словаря\n"
+        "/mywords - Посмотри все слова в своем словаре\n"
+        "/learn <кол-во слов> - Начни урок, где ты будешь переводить слова из своего списка!\n"
+    )
+    bot.send_message(message.chat.id, help_text)
+
+
+#Обработчик команды /addword
 @bot.message_handler(commands=["addword"])
 def handle_addword(message):
     global user_data
@@ -71,9 +87,7 @@ def handle_learn(message):
 
     ask_translation(message.chat.id,user_words,words_number)
     
-
-def ask_translation(chat_id,user_words,words_left,):  
-    global word
+def ask_translation(chat_id,user_words,words_left):  
     if words_left > 0:
         try:
             word = random.choice(list(user_words.keys()))
@@ -111,22 +125,21 @@ def handle_delword(message):
         bot.send_message(chat_id,"Ваш словарь пуст!")
         return
 
-    words = message.text.split()[1:]
-    if len(words) == 2:
-        word, translation = words[0].lower(), words[1].lower()
-        if word not in user_data[chat_id]:
-            bot.send_message(chat_id, "У вас в словаре нет такого слова!")
-            return
-        words_to_delete = user_data[chat_id[word[0]]]
-        del words_to_delete
-        user_data[chat_id] = user_dict
+    try:
+        word = message.text.split()[1]
+    except IndexError:
+        bot.send_message(chat_id, "Пожалуйста, введите команду в формате: /delword <слово которе вы хотите удалить>.")
+        return
+    if word not in user_data[chat_id].keys():
+        bot.send_message(chat_id, "У вас в словаре нет такого слова!")
+        return
+    translation = user_data[chat_id][word]
+    del user_data[chat_id][word]
 
-        with open("user_data.json", "w", encoding="utf-8") as json_file:
-            json.dump(user_data, json_file, ensure_ascii=False, indent=4)
-        
-        bot.send_message(chat_id, f'Слово "{word}" и его перевод "{translation}" успешно удалены!')
-    else:
-        bot.send_message(chat_id, 'Пожалуйста, введите слово и его перевод в формате: /delword <слово> <перевод>')
+    with open("user_data.json", "w", encoding="utf-8") as json_file:
+        json.dump(user_data, json_file, ensure_ascii=False, indent=4)
+
+    bot.send_message(chat_id, f'Слово "{word}" и его перевод "{translation}" успешно удалены!')
 
 #Обработчик команды /mywords
 @bot.message_handler(commands=["mywords"])
